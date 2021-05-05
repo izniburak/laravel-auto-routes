@@ -1,0 +1,55 @@
+<?php
+
+namespace Buki\AutoRoute;
+
+use Illuminate\Routing\Router;
+use Illuminate\Support\ServiceProvider;
+
+/**
+ * Class AutoRouteServiceProvider
+ *
+ * @package Buki\AutoRoute
+ * @author İzni Burak Demirtaş <info@burakdemirtasorg>
+ */
+class AutoRouteServiceProvider extends ServiceProvider
+{
+    /**
+     * Bootstrap the services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        $this->publishes([
+            $this->configPath() => config_path('auto-route.php')
+        ], 'auto-route');
+    }
+
+    /**
+     * Register the services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        $this->mergeConfigFrom($this->configPath(), 'auto-router');
+        $this->app->singleton(AutoRoute::class, function ($app) {
+            return new AutoRoute($app);
+        });
+
+        /** @var Router $router */
+        $router = $this->app['router'];
+        $autoRoute = $this->app[AutoRoute::class];
+        $router->macro('auto', function (string $prefix, string $controller, array $options = []) use ($autoRoute) {
+            return $autoRoute->auto($prefix, $controller, $options);
+        });
+    }
+
+    /**
+     * @return string
+     */
+    protected function configPath(): string
+    {
+        return __DIR__ . '/../config/auto-route.php';
+    }
+}
