@@ -24,11 +24,12 @@ $ composer require izniburak/laravel-auto-routes
 
 The service provider of the Package will be **automatically discovered** by Laravel.
 
-But if you have any problem about that, you can try to trigger following command to run and publish the Service Provider:
+After that, you should publish the config file via following command:
 
 ```
 $ php artisan vendor:publish --provider="Buki\AutoRoute\AutoRouteServiceProvider"
 ```
+Greate! You can start to use **Auto Route** Package.
 
 ## Usage
 Open `web.php` or `api.php` files in `routes` directory, and add a new route that will be generated automatically:
