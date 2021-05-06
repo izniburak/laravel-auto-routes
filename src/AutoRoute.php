@@ -11,7 +11,7 @@ use ReflectionMethod;
  * Class AutoRoute
  *
  * @package Buki\AutoRoute
- * @author İzni Burak Demirtaş <info@burakdemirtasorg>
+ * @author  İzni Burak Demirtaş <info@burakdemirtasorg>
  */
 class AutoRoute
 {
@@ -64,7 +64,22 @@ class AutoRoute
     {
         $this->app = $app;
         $this->router = $app->get('router');
-        $this->init($this->app['config']->get('auto-route'));
+    }
+
+    /**
+     * Initialize for the AutoRoute
+     *
+     * @param array $config
+     */
+    public function setConfigurations(array $config): void
+    {
+        $this->mainMethod = $config['main_method'] ?? 'index';
+        $this->namespace = $config['namespace'] ?? 'App\\Http\\Controllers';
+        $this->defaultPatterns = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
+        $this->defaultHttpMethods = $config['http_methods'] ?? $this->availableMethods;
+        if (empty($this->defaultHttpMethods) || $this->defaultHttpMethods === '*') {
+            $this->defaultHttpMethods = $this->availableMethods;
+        }
     }
 
     /**
@@ -110,7 +125,9 @@ class AutoRoute
                 function () use ($endpoints, $methodName, $method, $httpMethods, $routePatterns) {
                     $endpoints = implode('/', $endpoints);
                     $this->router->addRoute(
-                        array_map(function($method) { return strtoupper($method); }, $httpMethods),
+                        array_map(function ($method) {
+                            return strtoupper($method);
+                        }, $httpMethods),
                         ($methodName !== $this->mainMethod ? $methodName : '') . "/{$endpoints}",
                         [$method->class, $method->name]
                     )->where($routePatterns)->name(".{$methodName}");
@@ -180,21 +197,4 @@ class AutoRoute
             $controller,
         ];
     }
-
-    /**
-     * Initialize for the AutoRoute
-     *
-     * @param array $config
-     */
-    private function init(array $config): void
-    {
-        $this->mainMethod = $config['main_method'] ?? 'index';
-        $this->namespace = $config['namespace'] ?? 'App\\Http\\Controllers';
-        $this->defaultPatterns = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
-        $this->defaultHttpMethods = $config['http_methods'] ?? $this->availableMethods;
-        if (empty($this->defaultHttpMethods) || $this->defaultHttpMethods === '*') {
-            $this->defaultHttpMethods = $this->availableMethods;
-        }
-    }
 }
-
