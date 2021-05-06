@@ -16,6 +16,8 @@ Automatically Route Generator Package for Laravel.
 
 ## Install
 
+*Supported Laravel Versions:* **>= 6.x**
+
 Run the following command directly in your Project path:
 
 ```
@@ -140,7 +142,7 @@ Route::auto('/test', 'TestController', [
     // your options... 
 ]);
 ```
-Options array may contain all Laravel route attributes like `as`, `middleware`, `namespace`, etc..
+Options array may contain all Laravel route attributes like `as`, `name`, `middleware`, `namespace`, etc..
 
 In addition, you can add `patterns` into the Options array in order to define new patterns for the parameters of the methods in the Controllers. For example:
 ```php
