@@ -73,10 +73,11 @@ class AutoRoute
      */
     public function setConfigurations(array $config): void
     {
-        $this->mainMethod = $config['main_method'] ?? 'index';
-        $this->namespace = $config['namespace'] ?? 'App\\Http\\Controllers';
-        $this->defaultPatterns = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
-        $this->defaultHttpMethods = $config['http_methods'] ?? $this->availableMethods;
+        $this->mainMethod           = $config['main_method'] ?? 'index';
+        $this->namespace            = $config['namespace'] ?? 'App\\Http\\Controllers';
+        $this->defaultPatterns      = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
+        $this->defaultHttpMethods   = $config['http_methods'] ?? $this->availableMethods;
+        
         if (empty($this->defaultHttpMethods) || $this->defaultHttpMethods === '*') {
             $this->defaultHttpMethods = $this->availableMethods;
         }
