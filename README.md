@@ -142,12 +142,12 @@ Route::auto('/test', 'TestController', [
     // your options... 
 ]);
 ```
-Options array may contain all Laravel route attributes like `as`, `name`, `middleware`, `namespace`, etc..
+Options array may contain all Laravel route attributes like `name`, `middleware`, `namespace`, etc..
 
 In addition, you can add `patterns` into the Options array in order to define new patterns for the parameters of the methods in the Controllers. For example:
 ```php
 Route::auto('/test', 'TestController', [
-    'as' => 'test',
+    'name' => 'test',
     'middleware' => [YourMiddleware::class],
     'patterns' => [
         'id' => '\d+',
@@ -158,6 +158,21 @@ Route::auto('/test', 'TestController', [
 According to example above, you can use `$id` and `$value` parameters in all methods in the Controller. And for these parameters, the rules you defined will be applied.
 
 Also, to define default patterns for the parameters, you can modify `patterns` in `auto-route.php` file.
+
+- You can specify the Routes which will be generated automatically by using `only` or `except` with `options` parameters. You should use method names in the Controllers. For example;
+```php
+# First Example
+Route::auto('/foo', 'FooController', [
+    'only' => ['fooBar', 'postUpdatePost'],
+]);
+
+# Second Example
+Route::auto('/bar', 'BarController', [
+    'except' => ['test', 'putExample'],
+]);
+```
+
+According to first example above, only two methods will be generated. And according to other example, all methods will be generated except two methods which specified.
 
 - If you don't change the `main_method` in configurations, your main method will be `index` for the Controllers. That's mean, you should be add `index` method into your controller to define base endpoint of the Controller. For example;
 ```php

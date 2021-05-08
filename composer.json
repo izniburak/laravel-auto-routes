@@ -1,6 +1,6 @@
 {
     "name": "izniburak/laravel-auto-routes",
-    "description": "automatically route generator package for Laravel.",
+    "description": "Auto Route Generating Package for Laravel.",
     "keywords": ["auto-route", "laravel", "route", "router", "route-generator"],
     "type": "library",
     "license": "MIT",

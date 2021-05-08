@@ -107,8 +107,8 @@ class AutoRoute
             $except = $options['except'] ?? [];
             $patterns = $options['patterns'] ?? [];
 
-            if (!empty($only) && !in_array($methodName, $only)
-                || !empty($except) && in_array($methodName, $except)) {
+            if ((!empty($only) && !in_array($methodName, $only))
+                || (!empty($except) && in_array($methodName, $except))) {
                 continue;
             }
 
