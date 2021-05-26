@@ -174,9 +174,13 @@ class AutoRoute
         foreach ($method->getParameters() as $param) {
             $paramName = $param->getName();
             $typeHint = $param->hasType() ? $param->getType()->getName() : null;
-            if (!in_array($typeHint, ['int', 'float', 'string', 'bool']) && $typeHint !== null) {
-                continue;
+
+            if ($typeHint !== null && class_exists($typeHint)) {
+                if (!in_array($typeHint, ['int', 'float', 'string', 'bool']) && !in_array($typeHint, $patterns)) {
+                    continue;
+                }
             }
+
             $routePatterns[$paramName] = $patterns[$paramName] ??
                 ($this->defaultPatterns[":{$typeHint}"] ?? $this->defaultPatterns[':any']);
             $endpoints[] = $param->isOptional() ? "{{$paramName}?}" : "{{$paramName}}";
