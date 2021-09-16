@@ -77,7 +77,7 @@ class AutoRoute
         $this->namespace            = $config['namespace'] ?? 'App\\Http\\Controllers';
         $this->defaultPatterns      = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
         $this->defaultHttpMethods   = $config['http_methods'] ?? $this->availableMethods;
-        
+
         if (empty($this->defaultHttpMethods) || $this->defaultHttpMethods === '*') {
             $this->defaultHttpMethods = $this->availableMethods;
         }
@@ -121,7 +121,12 @@ class AutoRoute
             $this->router->group(
                 array_merge($options, [
                     'prefix' => $prefix,
-                    'as' => $options['as'] ?? trim($prefix, '/'),
+                    'as' => isset($options['as'])
+                        ? "{$options['as']}."
+                        : (isset($options['name'])
+                            ? "{$options['name']}."
+                            : trim($prefix, '/') . '.'
+                        ),
                 ]),
                 function () use ($endpoints, $methodName, $method, $httpMethods, $routePatterns) {
                     $endpoints = implode('/', $endpoints);
@@ -131,7 +136,7 @@ class AutoRoute
                         }, $httpMethods),
                         ($methodName !== $this->mainMethod ? $methodName : '') . "/{$endpoints}",
                         [$method->class, $method->name]
-                    )->where($routePatterns)->name(".{$methodName}");
+                    )->where($routePatterns)->name("{$method->name}");
                 }
             );
         }
