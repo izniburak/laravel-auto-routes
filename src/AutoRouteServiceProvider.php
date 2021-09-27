@@ -54,4 +54,14 @@ class AutoRouteServiceProvider extends ServiceProvider
     {
         return __DIR__ . '/../config/auto-route.php';
     }
+
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array
+     */
+    public function provides()
+    {
+        return [ AutoRoute::class ];
+    }
 }
