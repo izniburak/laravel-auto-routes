@@ -3,6 +3,7 @@
 namespace Buki\AutoRoute;
 
 use Illuminate\Container\Container;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Routing\Router;
 use ReflectionClass;
 use ReflectionMethod;
@@ -181,7 +182,8 @@ class AutoRoute
             $typeHint = $param->hasType() ? $param->getType()->getName() : null;
 
             if ($typeHint !== null && class_exists($typeHint)) {
-                if (!in_array($typeHint, ['int', 'float', 'string', 'bool']) && !in_array($typeHint, $patterns)) {
+                if (!in_array($typeHint, ['int', 'float', 'string', 'bool']) && !in_array($typeHint, $patterns)
+                    && !is_subclass_of($typeHint, Model::class)) {
                     continue;
                 }
             }
