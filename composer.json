@@ -1,7 +1,13 @@
 {
     "name": "izniburak/laravel-auto-routes",
     "description": "Auto Route Generating Package for Laravel.",
-    "keywords": ["auto-route", "laravel", "route", "router", "route-generator"],
+    "keywords": [
+        "auto-route",
+        "laravel",
+        "route",
+        "router",
+        "route-generator"
+    ],
     "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/izniburak/laravel-auto-routes",
@@ -15,10 +21,23 @@
     "require": {
         "php": "^7.2.5|^8.0"
     },
+    "require-dev": {
+        "illuminate/routing": "^8.0",
+        "phpunit/phpunit": "^8.5 || ^9.4"
+    },
     "autoload": {
         "psr-4": {
             "Buki\\AutoRoute\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Buki\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "coverage": "vendor/bin/phpunit --coverage-html coverage"
     },
     "extra": {
         "laravel": {

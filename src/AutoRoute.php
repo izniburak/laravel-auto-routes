@@ -4,6 +4,7 @@ namespace Buki\AutoRoute;
 
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Routing\Router;
 use ReflectionClass;
 use ReflectionMethod;
@@ -74,10 +75,10 @@ class AutoRoute
      */
     public function setConfigurations(array $config): void
     {
-        $this->mainMethod           = $config['main_method'] ?? 'index';
-        $this->namespace            = $config['namespace'] ?? 'App\\Http\\Controllers';
-        $this->defaultPatterns      = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
-        $this->defaultHttpMethods   = $config['http_methods'] ?? $this->availableMethods;
+        $this->mainMethod = $config['main_method'] ?? 'index';
+        $this->namespace = $config['namespace'] ?? 'App\\Http\\Controllers';
+        $this->defaultPatterns = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
+        $this->defaultHttpMethods = $config['http_methods'] ?? $this->availableMethods;
 
         if (empty($this->defaultHttpMethods) || $this->defaultHttpMethods === '*') {
             $this->defaultHttpMethods = $this->availableMethods;
@@ -87,7 +88,7 @@ class AutoRoute
     /**
      * @param string $prefix
      * @param string $controller
-     * @param array  $options
+     * @param array $options
      *
      * @return void
      * @throws
@@ -96,9 +97,11 @@ class AutoRoute
     {
         [$class, $className] = $this->resolveControllerName($controller);
         $classRef = new ReflectionClass($class);
-        foreach ($classRef->getMethods() as $method) {
+        foreach ($classRef->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             // Check the method should be added into Routes or not.
-            if (!stristr($method->class, $className) || !$method->isPublic()
+            if (in_array($method->class, [BaseController::class, "{$this->namespace}\\Controller"])
+                || $method->getDeclaringClass()->getParentClass()->getName() === BaseController::class
+                || !$method->isPublic()
                 || strpos($method->name, '__') === 0) {
                 continue;
             }
@@ -129,14 +132,14 @@ class AutoRoute
                             : trim($prefix, '/') . '.'
                         ),
                 ]),
-                function () use ($endpoints, $methodName, $method, $httpMethods, $routePatterns) {
+                function () use ($endpoints, $methodName, $method, $httpMethods, $routePatterns, $classRef) {
                     $endpoints = implode('/', $endpoints);
                     $this->router->addRoute(
                         array_map(function ($method) {
                             return strtoupper($method);
                         }, $httpMethods),
                         ($methodName !== $this->mainMethod ? $methodName : '') . "/{$endpoints}",
-                        [$method->class, $method->name]
+                        [$classRef->getName(), $method->name]
                     )->where($routePatterns)->name("{$method->name}");
                 }
             );
@@ -169,7 +172,7 @@ class AutoRoute
 
     /**
      * @param ReflectionMethod $method
-     * @param array            $patterns
+     * @param array $patterns
      *
      * @return array
      */

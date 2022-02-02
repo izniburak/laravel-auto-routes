@@ -18,7 +18,20 @@ Automatically Route Generator Package for Laravel.
 
 *Supported Laravel Versions:* **>= 6.x**
 
-Run the following command directly in your Project path:
+composer.json file:
+```json
+{
+    "require": {
+        "izniburak/laravel-auto-routes": "^1.0"
+    }
+}
+```
+after run the install command.
+```
+$ composer install
+```
+
+**OR** Run the following command directly in your Project path:
 
 ```
 $ composer require izniburak/laravel-auto-routes
