@@ -2,6 +2,7 @@
 
 namespace Buki\AutoRoute;
 
+use Buki\AutoRoute\Middleware\AjaxRequestMiddleware;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Routing\Controller as BaseController;
@@ -38,6 +39,11 @@ class AutoRoute
     protected $availableMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
     /**
+     * @var string[] Custom methods for the package
+     */
+    protected $customMethods = ['XGET', 'XPOST', 'XPUT', 'XPATCH', 'XDELETE', 'XOPTIONS', 'XANY'];
+
+    /**
      * @var string Main Method
      */
     protected $mainMethod;
@@ -46,6 +52,11 @@ class AutoRoute
      * @var string
      */
     protected $defaultHttpMethods;
+
+    /**
+     * @var string Ajax Middleware class for the Requests
+     */
+    protected $ajaxMiddleware;
 
     /**
      * @var string[]
@@ -61,6 +72,8 @@ class AutoRoute
      * AutoRoute constructor.
      *
      * @param Container $app
+     *
+     * @throws
      */
     public function __construct(Container $app)
     {
@@ -77,6 +90,7 @@ class AutoRoute
     {
         $this->mainMethod = $config['main_method'] ?? 'index';
         $this->namespace = $config['namespace'] ?? 'App\\Http\\Controllers';
+        $this->ajaxMiddleware = $config['ajax_middleware'] ?? AjaxRequestMiddleware::class;
         $this->defaultPatterns = array_merge($this->defaultPatterns, $config['patterns'] ?? []);
         $this->defaultHttpMethods = $config['http_methods'] ?? $this->availableMethods;
 
@@ -95,44 +109,46 @@ class AutoRoute
      */
     public function auto(string $prefix, string $controller, array $options = []): void
     {
-        [$class, $className] = $this->resolveControllerName($controller);
-        $classRef = new ReflectionClass($class);
-        foreach ($classRef->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            // Check the method should be added into Routes or not.
-            if (in_array($method->class, [BaseController::class, "{$this->namespace}\\Controller"])
-                || $method->getDeclaringClass()->getParentClass()->getName() === BaseController::class
-                || !$method->isPublic()
-                || strpos($method->name, '__') === 0) {
-                continue;
-            }
+        $only = $options['only'] ?? [];
+        $except = $options['except'] ?? [];
+        $patterns = $options['patterns'] ?? [];
 
-            // Needed definitions
-            $methodName = $method->name;
-            $only = $options['only'] ?? [];
-            $except = $options['except'] ?? [];
-            $patterns = $options['patterns'] ?? [];
+        $this->router->group(
+            array_merge($options, [
+                'prefix' => $prefix,
+                'as' => isset($options['as'])
+                    ? "{$options['as']}."
+                    : (isset($options['name'])
+                        ? "{$options['name']}."
+                        : trim($prefix, '/') . '.'
+                    ),
+            ]),
+            function () use ($controller, $only, $except, $patterns) {
+                [$class, $className] = $this->resolveControllerName($controller);
+                $classRef = new ReflectionClass($class);
+                foreach ($classRef->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                    // Check the method should be added into Routes or not.
+                    if (in_array($method->class, [BaseController::class, "{$this->namespace}\\Controller"])
+                        || $method->getDeclaringClass()->getParentClass()->getName() === BaseController::class
+                        || !$method->isPublic()
+                        || strpos($method->name, '__') === 0) {
+                        continue;
+                    }
 
-            if ((!empty($only) && !in_array($methodName, $only))
-                || (!empty($except) && in_array($methodName, $except))) {
-                continue;
-            }
+                    // Needed definitions
+                    $methodName = $method->name;
 
-            // Find the HTTP method which will be used and method name.
-            [$httpMethods, $methodName] = $this->getHttpMethodAndName($methodName);
+                    if ((!empty($only) && !in_array($methodName, $only))
+                        || (!empty($except) && in_array($methodName, $except))) {
+                        continue;
+                    }
 
-            // Get endpoints and parameter patterns for Route
-            [$endpoints, $routePatterns] = $this->getRouteValues($method, $patterns);
-            $this->router->group(
-                array_merge($options, [
-                    'prefix' => $prefix,
-                    'as' => isset($options['as'])
-                        ? "{$options['as']}."
-                        : (isset($options['name'])
-                            ? "{$options['name']}."
-                            : trim($prefix, '/') . '.'
-                        ),
-                ]),
-                function () use ($endpoints, $methodName, $method, $httpMethods, $routePatterns, $classRef) {
+                    // Find the HTTP method which will be used and method name.
+                    [$httpMethods, $methodName, $middleware] = $this->getHttpMethodAndName($methodName);
+
+                    // Get endpoints and parameter patterns for Route
+                    [$endpoints, $routePatterns] = $this->getRouteValues($method, $patterns);
+
                     $endpoints = implode('/', $endpoints);
                     $this->router->addRoute(
                         array_map(function ($method) {
@@ -140,10 +156,10 @@ class AutoRoute
                         }, $httpMethods),
                         ($methodName !== $this->mainMethod ? $methodName : '') . "/{$endpoints}",
                         [$classRef->getName(), $method->name]
-                    )->where($routePatterns)->name("{$method->name}");
+                    )->where($routePatterns)->name("{$method->name}")->middleware($middleware);
                 }
-            );
-        }
+            }
+        );
     }
 
     /**
@@ -154,11 +170,16 @@ class AutoRoute
     private function getHttpMethodAndName(string $methodName): array
     {
         $httpMethods = $this->defaultHttpMethods;
-        foreach ($this->availableMethods as $httpMethod) {
-            if (stripos($methodName, strtolower($httpMethod), 0) === 0) {
-                $httpMethods = [$httpMethod];
+        $middleware = null;
+        foreach (array_merge($this->availableMethods, $this->customMethods) as $httpMethod) {
+            $httpMethod = strtolower($httpMethod);
+            if (stripos($methodName, $httpMethod, 0) === 0) {
+                if ($httpMethod !== 'xany') {
+                    $httpMethods = [ltrim($httpMethod, 'x')];
+                }
+                $middleware = strpos($httpMethod, 'x') === 0 ? $this->ajaxMiddleware : null;
                 $methodName = lcfirst(
-                    preg_replace('/' . strtolower($httpMethod) . '_?/i', '', $methodName, 1)
+                    preg_replace('/' . $httpMethod . '_?/i', '', $methodName, 1)
                 );
                 break;
             }
@@ -167,7 +188,7 @@ class AutoRoute
         // Convert URL from camelCase to snake-case.
         $methodName = strtolower(preg_replace('%([a-z]|[0-9])([A-Z])%', '\1-\2', $methodName));
 
-        return [$httpMethods, $methodName];
+        return [$httpMethods, $methodName, $middleware];
     }
 
     /**

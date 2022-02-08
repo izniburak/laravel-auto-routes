@@ -14,11 +14,21 @@
 
 Automatically Route Generator Package for Laravel.
 
+## Features
+- All HTTP Methods which supported by Laravel
+- AJAX supported HTTP Methods (XMLHttpRequest)
+- Custom patterns for parameters with Regex
+- kebab-case and snake_case supported URLs
+
 ## Install
 
 *Supported Laravel Versions:* **>= 6.x**
 
-composer.json file:
+Run the following command directly in your Project path:
+```
+$ composer require izniburak/laravel-auto-routes
+```
+**OR** open your `composer.json` file and add the package like this:
 ```json
 {
     "require": {
@@ -29,12 +39,6 @@ composer.json file:
 after run the install command.
 ```
 $ composer install
-```
-
-**OR** Run the following command directly in your Project path:
-
-```
-$ composer require izniburak/laravel-auto-routes
 ```
 
 The service provider of the Package will be **automatically discovered** by Laravel.
@@ -68,7 +72,7 @@ use Buki\AutoRoute\AutoRouteFacade as Route;
 ```
 - All methods which will be auto generated must have `public` accessor to discovered by the **AutoRoute** Package.
   
-
+### Methods
 - If you use `camelCase` style for your method names in the Controllers, these methods endpoints will automatically convert to `kebab-case` to make pretty URLs. For example:
 ```php
 Route::auto('/test', 'TestController');
@@ -149,6 +153,56 @@ class TestController extends Controller
 }
 ```
 
+### Ajax Supported Methods
+
+Also, you can add **AJAX supported** routes. For example; If you want to have a route which only access with GET method and XMLHttpRequest, you can define it simply.
+This package has some AJAX supported methods. These are;
+```
+XGET, XPOST, XPUT, XDELETE, XPATCH, XOPTIONS, XANY.
+```
+```php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class TestController extends Controller
+{
+    /**
+     * URL: "/test/foo"
+     * This method will only work with 'GET' method and XMLHttpRequest.
+     */
+    public function xgetFoo(Request $request)
+    {
+        // your codes
+    }
+    
+    /**
+     * URL: "/test/bar"
+     * This method will only work with 'POST' method and XMLHttpRequest.
+     */
+    public function xpostBar(Request $request)
+    {
+        // your codes
+    }
+    
+    /**
+     * URL: "/test/baz"
+     * This method will work with any method and XMLHttpRequest. 
+     */
+    public function xanyBaz(Request $request)
+    {
+        // your codes
+    }
+}
+```
+As you see, you need to add only `x` char as prefix to define the AJAX supported routes. 
+If you want to support XMLHttpRequest and all HTTP methods which supported by Laravel, you can use `xany` prefix.
+
+For AJAX supported methods, the package will automatically add a middleware in order to check XMLHttpRequest for the routes.
+This middleware throws a `MethodNotAllowedException` exception. But, you can change this middleware from `auto-routes.php` file in `config` directory, if you want.
+
+### Options 
+
 - You can add route options via third parameter of the `auto` method.
 ```php
 Route::auto('/test', 'TestController', [
@@ -215,6 +269,7 @@ class TestController extends Controller
     }
 }
 ```
+### Parameters
 - You can use parameters as `required` and `optional` for the methods in your Controllers. For example;
 ```php
 namespace App\Http\Controllers;

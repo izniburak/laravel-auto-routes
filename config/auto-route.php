@@ -49,4 +49,18 @@ return [
         'date' => '([0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1]))',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | AJAX Middleware Class
+    |--------------------------------------------------------------------------
+    | The middleware class that check AJAX request for your methods
+    | which starts with 'x' char in your Controller file.
+    | For example: xgetFoo, xpostBar, xanyBaz.
+    | If you have any method in your controller like above, this middleware
+    | will be triggered while trying to access your route.
+    |
+    | Default: \Buki\AutoRoute\Middleware\AjaxRequestMiddleware::class
+    */
+    // 'ajax_middleware' => App\\Http\\Middleware\\YourMiddleware::class,
+
 ];
