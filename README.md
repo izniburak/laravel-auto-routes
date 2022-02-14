@@ -12,7 +12,7 @@
 [![Latest Unstable Version](https://poser.pugx.org/izniburak/laravel-auto-routes/v/unstable.svg)](https://packagist.org/packages/izniburak/laravel-auto-routes)
 [![License](https://poser.pugx.org/izniburak/laravel-auto-routes/license.svg)](https://packagist.org/packages/izniburak/laravel-auto-routes)
 
-Automatically Route Generator Package for Laravel.
+Automatically Route Generator & Discovery Package for Laravel.
 
 ## Features
 - All HTTP Methods which supported by Laravel

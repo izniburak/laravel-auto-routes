@@ -18,49 +18,31 @@ use ReflectionMethod;
  */
 class AutoRoute
 {
-    /**
-     * @var Container
-     */
+    /** @var Container */
     protected $app;
 
-    /**
-     * @var Router
-     */
+    /** @var Router */
     protected $router;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $namespace;
 
-    /**
-     * @var string[] Laravel Routing Available Methods.
-     */
+    /** @var string[] Laravel Routing Available Methods. */
     protected $availableMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
-    /**
-     * @var string[] Custom methods for the package
-     */
+    /** @var string[] Custom methods for the package */
     protected $customMethods = ['XGET', 'XPOST', 'XPUT', 'XPATCH', 'XDELETE', 'XOPTIONS', 'XANY'];
 
-    /**
-     * @var string Main Method
-     */
+    /** @var string Main Method */
     protected $mainMethod;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $defaultHttpMethods;
 
-    /**
-     * @var string Ajax Middleware class for the Requests
-     */
+    /** @var string Ajax Middleware class for the Requests */
     protected $ajaxMiddleware;
 
-    /**
-     * @var string[]
-     */
+    /** @var string[] */
     protected $defaultPatterns = [
         ':any' => '([^/]+)',
         ':int' => '(\d+)',
@@ -70,9 +52,6 @@ class AutoRoute
 
     /**
      * AutoRoute constructor.
-     *
-     * @param Container $app
-     *
      * @throws
      */
     public function __construct(Container $app)
@@ -83,8 +62,6 @@ class AutoRoute
 
     /**
      * Initialize for the AutoRoute
-     *
-     * @param array $config
      */
     public function setConfigurations(array $config): void
     {
@@ -100,11 +77,6 @@ class AutoRoute
     }
 
     /**
-     * @param string $prefix
-     * @param string $controller
-     * @param array $options
-     *
-     * @return void
      * @throws
      */
     public function auto(string $prefix, string $controller, array $options = []): void
@@ -162,11 +134,6 @@ class AutoRoute
         );
     }
 
-    /**
-     * @param string $methodName
-     *
-     * @return array
-     */
     private function getHttpMethodAndName(string $methodName): array
     {
         $httpMethods = $this->defaultHttpMethods;
@@ -191,12 +158,6 @@ class AutoRoute
         return [$httpMethods, $methodName, $middleware];
     }
 
-    /**
-     * @param ReflectionMethod $method
-     * @param array $patterns
-     *
-     * @return array
-     */
     private function getRouteValues(ReflectionMethod $method, array $patterns = []): array
     {
         $routePatterns = $endpoints = [];
@@ -205,11 +166,8 @@ class AutoRoute
             $paramName = $param->getName();
             $typeHint = $param->hasType() ? $param->getType()->getName() : null;
 
-            if ($typeHint !== null && class_exists($typeHint)) {
-                if (!in_array($typeHint, ['int', 'float', 'string', 'bool']) && !in_array($typeHint, $patterns)
-                    && !is_subclass_of($typeHint, Model::class)) {
-                    continue;
-                }
+            if (!$this->isValidRouteParam($typeHint)) {
+                continue;
             }
 
             $routePatterns[$paramName] = $patterns[$paramName] ??
@@ -220,11 +178,6 @@ class AutoRoute
         return [$endpoints, $routePatterns];
     }
 
-    /**
-     * @param string $controller
-     *
-     * @return array
-     */
     private function resolveControllerName(string $controller): array
     {
         $controller = str_replace(['.', $this->namespace], ['\\', ''], $controller);
@@ -232,5 +185,22 @@ class AutoRoute
             $this->namespace . "\\" . trim($controller, "\\"),
             $controller,
         ];
+    }
+
+    private function isValidRouteParam(?string $type): bool
+    {
+        if (is_null($type) || in_array($type, ['int', 'float', 'string', 'bool', 'mixed'])) {
+            return true;
+        }
+
+        if (class_exists($type) && is_subclass_of($type, Model::class)) {
+            return true;
+        }
+
+        if (function_exists('enum_exists') && enum_exists($type)) {
+            return true;
+        }
+
+        return false;
     }
 }
