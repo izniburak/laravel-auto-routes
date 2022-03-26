@@ -62,6 +62,6 @@ class AutoRouteServiceProvider extends ServiceProvider
      */
     public function provides()
     {
-        return [ AutoRoute::class ];
+        return [AutoRoute::class];
     }
 }
