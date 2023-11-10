@@ -25,7 +25,7 @@ Automatically Route Generator & Discovery Package for Laravel.
 
 Supported Laravel Versions:
 - v2.x: Laravel 10 and later
-- v1.x: Laravel 6 and later ([see the source](tree/1.x))
+- v1.x: Laravel 6 and later ([see the source](https://github.com/izniburak/laravel-auto-routes/tree/1.x))
 
 Run the following command directly in your Project path:
 ```
