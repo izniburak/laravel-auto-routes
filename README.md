@@ -22,7 +22,6 @@ Automatically Route Generator & Discovery Package for Laravel.
 - Livewire routes support [included Volt] _(in v2.x)_
 
 ## Install
-
 Supported Laravel Versions:
 - v2.x: Laravel 10 and later
 - v1.x: Laravel 6 and later ([see the source](https://github.com/izniburak/laravel-auto-routes/tree/1.x))
@@ -338,6 +337,39 @@ Route::auto('/test', 'Backend.TestController');
 # OR
 Route::auto('/test', 'Backend\\TestController');
 ```
+
+## with Livewire & Volt 
+You can define Livewire or Volt component routes directly in your controller by using Auto Routes package!
+For this, you should add new methods which have prefix `volt` or `wire`. That's it. Auto Routes package will automatically discover your Livewire routes and add them into the application routes.
+
+```php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class TestController extends Controller
+{
+    /**
+     * URL: "/test/foo"
+     * id parameter must be numeric.  
+     */
+    public function voltFoo(): string
+    {
+        // resources/views/livewire/pages/foo.blade.php
+        return 'pages.foo';
+    }
+
+    /**
+     * URL: "/test/bar"
+     */
+    public function wireBar(): string
+    {
+        return \App\Livewire\TestComponent::class;
+    }
+}
+```
+As you see; for both methods, you must return a string value that Volt component path string or Livewire component class string. Now, you can access your Livewire components.
+
 
 ## Support
 You can use Issues
