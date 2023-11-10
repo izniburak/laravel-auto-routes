@@ -9,7 +9,7 @@ use Illuminate\Support\ServiceProvider;
  * Class AutoRouteServiceProvider
  *
  * @package Buki\AutoRoute
- * @author  İzni Burak Demirtaş <info@burakdemirtasorg>
+ * @author  İzni Burak Demirtaş <info@burakdemirtas.org>
  */
 class AutoRouteServiceProvider extends ServiceProvider
 {
@@ -18,7 +18,7 @@ class AutoRouteServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         $this->publishes([
             $this->configPath() => config_path('auto-route.php'),
@@ -30,7 +30,7 @@ class AutoRouteServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         $this->mergeConfigFrom($this->configPath(), 'auto-route');
         $this->app->singleton(AutoRoute::class, function ($app) {
@@ -60,7 +60,7 @@ class AutoRouteServiceProvider extends ServiceProvider
      *
      * @return array
      */
-    public function provides()
+    public function provides(): array
     {
         return [AutoRoute::class];
     }
