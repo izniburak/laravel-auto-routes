@@ -10,40 +10,33 @@ use Illuminate\Routing\Router;
 use ReflectionClass;
 use ReflectionMethod;
 
+// for Livewire support
+use Livewire\{Volt\Volt, Component};
+
 /**
  * Class AutoRoute
  *
  * @package Buki\AutoRoute
- * @author  İzni Burak Demirtaş <info@burakdemirtasorg>
+ * @author  İzni Burak Demirtaş <info@burakdemirtas.org>
+ * @web     https://buki.dev
  */
 class AutoRoute
 {
-    /** @var Container */
-    protected $app;
+    protected Router $router;
 
-    /** @var Router */
-    protected $router;
+    protected string $namespace;
 
-    /** @var string */
-    protected $namespace;
+    protected array $availableMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'];
 
-    /** @var string[] Laravel Routing Available Methods. */
-    protected $availableMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+    protected array $customMethods = ['XGET', 'XPOST', 'XPUT', 'XPATCH', 'XDELETE', 'XOPTIONS', 'XANY', 'VOLT', 'WIRE'];
 
-    /** @var string[] Custom methods for the package */
-    protected $customMethods = ['XGET', 'XPOST', 'XPUT', 'XPATCH', 'XDELETE', 'XOPTIONS', 'XANY'];
+    protected string $mainMethod;
 
-    /** @var string Main Method */
-    protected $mainMethod;
+    protected string|array $defaultHttpMethods;
 
-    /** @var string */
-    protected $defaultHttpMethods;
+    protected string $ajaxMiddleware;
 
-    /** @var string Ajax Middleware class for the Requests */
-    protected $ajaxMiddleware;
-
-    /** @var string[] */
-    protected $defaultPatterns = [
+    protected array $defaultPatterns = [
         ':any' => '([^/]+)',
         ':int' => '(\d+)',
         ':float' => '[+-]?([0-9]*[.])?[0-9]+',
@@ -54,9 +47,8 @@ class AutoRoute
      * AutoRoute constructor.
      * @throws
      */
-    public function __construct(Container $app)
+    public function __construct(protected Container $app)
     {
-        $this->app = $app;
         $this->router = $app->get('router');
     }
 
@@ -103,7 +95,7 @@ class AutoRoute
                     if (in_array($method->class, [BaseController::class, "{$this->namespace}\\Controller"])
                         || $method->getDeclaringClass()->getParentClass()->getName() === BaseController::class
                         || !$method->isPublic()
-                        || strpos($method->name, '__') === 0) {
+                        || str_starts_with($method->name, '__')) {
                         continue;
                     }
 
@@ -116,46 +108,72 @@ class AutoRoute
                     }
 
                     // Find the HTTP method which will be used and method name.
-                    [$httpMethods, $methodName, $middleware] = $this->getHttpMethodAndName($methodName);
+                    [$httpMethods, $path, $middleware] = $this->getHttpMethodAndName($methodName);
 
                     // Get endpoints and parameter patterns for Route
                     [$endpoints, $routePatterns] = $this->getRouteValues($method, $patterns);
 
                     $endpoints = implode('/', $endpoints);
-                    $this->router->addRoute(
-                        array_map(function ($method) {
-                            return strtoupper($method);
-                        }, $httpMethods),
-                        ($methodName !== $this->mainMethod ? $methodName : '') . "/{$endpoints}",
-                        [$classRef->getName(), $method->name]
-                    )->where($routePatterns)->name("{$method->name}")->middleware($middleware);
+
+                    $handler = [$classRef->getName(), $method->name];
+                    $routePath = ($path !== $this->mainMethod ? $path : '') . "/{$endpoints}";
+
+                    // for volt
+                    if (str_starts_with($method->name, 'volt')) {
+                        if (class_exists(Volt::class) && $method->getReturnType()?->getName() === 'string') {
+                            Volt::route($routePath, $method->invoke(new ($classRef->getName())))
+                                ->where($routePatterns)->name("{$method->name}")->middleware($middleware);
+                        }
+
+                        continue;
+                    }
+
+                    // for livewire
+                    if (str_starts_with($method->name, 'wire')) {
+                        if (!(class_exists(Component::class) && $method->getReturnType()?->getName() === 'string')) {
+                            continue;
+                        }
+
+                        $handler = $method->invoke(new ($classRef->getName()));
+
+                        if (!is_subclass_of($handler, Component::class)) {
+                            continue;
+                        }
+                    }
+
+                    $this->router
+                        ->addRoute(array_map(fn ($method) => strtoupper($method), $httpMethods), $routePath, $handler)
+                        ->where($routePatterns)->name("{$method->name}")->middleware($middleware);
                 }
             }
         );
     }
 
-    private function getHttpMethodAndName(string $methodName): array
+    private function getHttpMethodAndName(string $controllerMethod): array
     {
         $httpMethods = $this->defaultHttpMethods;
         $middleware = null;
-        foreach (array_merge($this->availableMethods, $this->customMethods) as $httpMethod) {
-            $httpMethod = strtolower($httpMethod);
-            if (stripos($methodName, $httpMethod, 0) === 0) {
-                if ($httpMethod !== 'xany') {
-                    $httpMethods = [ltrim($httpMethod, 'x')];
+        foreach (array_merge($this->availableMethods, $this->customMethods) as $method) {
+            $method = strtolower($method);
+            if (stripos($controllerMethod, $method, 0) === 0) {
+                if (in_array($method, ['volt', 'wire'])) {
+                    $httpMethods = ['GET', 'HEAD'];
+                } elseif ($method !== 'xany') {
+                    $httpMethods = [ltrim($method, 'x')];
                 }
-                $middleware = strpos($httpMethod, 'x') === 0 ? $this->ajaxMiddleware : null;
-                $methodName = lcfirst(
-                    preg_replace('/' . $httpMethod . '_?/i', '', $methodName, 1)
+
+                $middleware = str_starts_with($method, 'x') ? $this->ajaxMiddleware : null;
+                $controllerMethod = lcfirst(
+                    preg_replace('/' . $method . '_?/i', '', $controllerMethod, 1)
                 );
                 break;
             }
         }
 
         // Convert URL from camelCase to snake-case.
-        $methodName = strtolower(preg_replace('%([a-z]|[0-9])([A-Z])%', '\1-\2', $methodName));
+        $controllerMethod = strtolower(preg_replace('%([a-z]|[0-9])([A-Z])%', '\1-\2', $controllerMethod));
 
-        return [$httpMethods, $methodName, $middleware];
+        return [$httpMethods, $controllerMethod, $middleware];
     }
 
     private function getRouteValues(ReflectionMethod $method, array $patterns = []): array
