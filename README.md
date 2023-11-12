@@ -351,7 +351,6 @@ class TestController extends Controller
 {
     /**
      * URL: "/test/foo"
-     * id parameter must be numeric.  
      */
     public function voltFoo(): string
     {
