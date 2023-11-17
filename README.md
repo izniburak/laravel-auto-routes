@@ -338,7 +338,7 @@ Route::auto('/test', 'Backend.TestController');
 Route::auto('/test', 'Backend\\TestController');
 ```
 
-## with Livewire & Volt 
+## Livewire & Volt support 
 You can define Livewire or Volt component routes directly in your controller by using Auto Routes package!
 For this, you should add new methods which have prefix `volt` or `wire`. That's it. Auto Routes package will automatically discover your Livewire routes and add them into the application routes.
 

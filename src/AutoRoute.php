@@ -135,7 +135,6 @@ class AutoRoute
                         }
 
                         $handler = $method->invoke(new ($classRef->getName()));
-
                         if (!is_subclass_of($handler, Component::class)) {
                             continue;
                         }
