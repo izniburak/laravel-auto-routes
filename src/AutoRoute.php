@@ -113,15 +113,15 @@ class AutoRoute
                     // Get endpoints and parameter patterns for Route
                     [$endpoints, $routePatterns] = $this->getRouteValues($method, $patterns);
 
-                    $endpoints = implode('/', $endpoints);
+                    $endpoint = implode('/', $endpoints);
 
                     $handler = [$classRef->getName(), $method->name];
-                    $routePath = ($path !== $this->mainMethod ? $path : '') . "/{$endpoints}";
+                    $routePath = ($path !== $this->mainMethod ? $path : '') . "/{$endpoint}";
 
                     // for volt
                     if (str_starts_with($method->name, 'volt')) {
                         if (class_exists(Volt::class) && $method->getReturnType()?->getName() === 'string') {
-                            Volt::route($routePath, $method->invoke(new ($classRef->getName())))
+                            Volt::route($routePath, $method->invoke(new ($classRef->getName()), ...$endpoints))
                                 ->where($routePatterns)->name("{$method->name}")->middleware($middleware);
                         }
 
@@ -134,7 +134,7 @@ class AutoRoute
                             continue;
                         }
 
-                        $handler = $method->invoke(new ($classRef->getName()));
+                        $handler = $method->invoke(new ($classRef->getName()), ...$endpoints);
                         if (!is_subclass_of($handler, Component::class)) {
                             continue;
                         }
