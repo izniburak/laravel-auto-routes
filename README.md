@@ -27,8 +27,8 @@ Supported Laravel Versions:
 - v1.x: Laravel 6 and later ([see the source](https://github.com/izniburak/laravel-auto-routes/tree/1.x))
 
 Run the following command directly in your Project path:
-```
-$ composer require izniburak/laravel-auto-routes
+```sh
+composer require izniburak/laravel-auto-routes
 ```
 **OR** open your `composer.json` file and add the package like this:
 ```json
@@ -39,16 +39,16 @@ $ composer require izniburak/laravel-auto-routes
 }
 ```
 after run the install command.
-```
-$ composer install
+```sh
+composer install
 ```
 
 The service provider of the Package will be **automatically discovered** by Laravel.
 
 After that, you should publish the config file via following command:
 
-```
-$ php artisan vendor:publish --provider="Buki\AutoRoute\AutoRouteServiceProvider"
+```sh
+php artisan vendor:publish --provider="Buki\AutoRoute\AutoRouteServiceProvider"
 ```
 Greate! You can start to use **Auto Route** Package.
 

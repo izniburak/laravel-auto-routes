@@ -77,23 +77,20 @@ class AutoRoute
         $except = $options['except'] ?? [];
         $patterns = $options['patterns'] ?? [];
 
+        $routeName = trim($options['as'] ?? ($options['name'] ?? trim($prefix, '/')), '.') . '.';
+        if ($routeName === '.') {
+            $routeName = '';
+        }
+
         $this->router->group(
-            array_merge($options, [
-                'prefix' => $prefix,
-                'as' => isset($options['as'])
-                    ? "{$options['as']}."
-                    : (isset($options['name'])
-                        ? "{$options['name']}."
-                        : trim($prefix, '/') . '.'
-                    ),
-            ]),
+            array_merge($options, ['prefix' => $prefix, 'as' => $routeName]),
             function () use ($controller, $only, $except, $patterns) {
                 [$class, $className] = $this->resolveControllerName($controller);
                 $classRef = new ReflectionClass($class);
                 foreach ($classRef->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                     // Check the method should be added into Routes or not.
                     if (in_array($method->class, [BaseController::class, "{$this->namespace}\\Controller"])
-                        || $method->getDeclaringClass()->getParentClass()->getName() === BaseController::class
+                        || ($method->getDeclaringClass()->getParentClass() && $method->getDeclaringClass()->getParentClass()->getName() === BaseController::class)
                         || !$method->isPublic()
                         || str_starts_with($method->name, '__')) {
                         continue;
